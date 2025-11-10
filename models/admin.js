@@ -7,8 +7,15 @@ const adminSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    employeeId: { type: String, required: true, unique: true },
-    department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
+    employeeId: { 
+      type: String, 
+      required: true, 
+      unique: true 
+    },
+    department: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Department" 
+    },
   },
   { timestamps: true }
 );

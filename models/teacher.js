@@ -7,14 +7,24 @@ const teacherSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    employeeId: { type: String, required: true, unique: true },
-    department: { type: mongoose.Schema.Types.ObjectId, ref: "Department" },
+    employeeId: { 
+      type: String, 
+      required: true, 
+      unique: true 
+    },
+    department: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Department" 
+    },
     designation: {
       type: String,
       enum: ["Head of Department", "Professor", "Assistant Professor"],
       required: true,
     },
-    courses: [{ type: mongoose.Schema.Types.ObjectId, ref: "Course" }],
+    courses: [{ 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Course" 
+    }],
     specialization: { type: String },
   },
   { timestamps: true }

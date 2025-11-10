@@ -7,8 +7,14 @@ const reportCardSchema = new mongoose.Schema(
       ref: "Student",
       required: true,
     },
-    course: { type: mongoose.Schema.Types.ObjectId, ref: "Course" },
-    grade: { type: String, required: true },
+    course: { 
+      type: mongoose.Schema.Types.ObjectId, 
+      ref: "Course" 
+    },
+    grade: { 
+      type: String, 
+      required: true 
+    },
     totalPercentage: { type: Number },
     result: {
       type: String,
