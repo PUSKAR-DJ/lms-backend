@@ -1,6 +1,3 @@
-# ⚙️ **README — lms-backend**
-
-```markdown
 # ⚙️ LMS Backend (Node.js + Express + MongoDB)
 
 This is the **backend** of the Learning Management System (LMS).  
