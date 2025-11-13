@@ -1,0 +1,74 @@
+{
+	"info": {
+		"_postman_id": "1be2cf07-6da4-4468-9ce6-9522017b0e74",
+		"name": "LMS Backend (Auth)",
+		"description": "# How to Test Your LMS Auth Routes\n\nThis guide will walk you through importing and using this collection to test your backend.\n\n### Step 1: Check the `baseUrl` Variable\n\nThe collection is set up with a variable `{{baseUrl}}` to make it easy to manage your API's URL.\n\n1.  Click on the \"LMS Backend (Auth)\" collection.\n2.  Go to the **Variables** tab.\n3.  You will see `baseUrl` is set to `http://localhost:5000/api/auth`. This matches the settings in your `.env` file (`PORT=5000`) and `server.js` file (`/api/auth`).\n4.  If your server is running on a different port, you only need to change it in this one spot.\n\n### Step 2: Test the Routes\n\n**Important:** Make sure your backend server is running!\n```bash\nnpm run dev\n```\n\n**Test Workflow (Run in this order):**\n\n1.  **Register User**\n    * Expand the collection and click on the **Register User** request.\n    * Click **Send**.\n    * If successful, you should get a `201 Created` status and a JSON response with a `token` and `role`. This confirms the user was created in your database.\n\n2.  **Login User**\n    * Click on the **Login User** request.\n    * The `Body` is pre-filled with the *same credentials* from the register request.\n    * Click **Send**.\n    * If successful, you should get a `200 OK` status and a JSON response with a `token` and `role`. This confirms your login logic and password comparison are working correctly.\n\n**What to do if you get an error:**\n\n* **`400 - \"User already exists\"`**: This is expected if you run **Register User** more than once with the same email. It's a good sign! It means your check is working.\n* **`404 - \"User not found\"`**: Make sure you ran **Register User** first before trying to log in.\n* **`400 - \"Invalid credentials\"`**: Check if the password in the **Login User** body matches the one you used to register.\n* **`Error: connect ECONNREFUSED`**: Make sure your backend server is running (`npm run dev`).",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "43800398",
+		"_collection_link": "https://pastos101.postman.co/workspace/Cosmos~dc779c67-8fd7-4f1f-b287-ab812f434d4d/collection/43800398-1be2cf07-6da4-4468-9ce6-9522017b0e74?action=share&source=collection_link&creator=43800398"
+	},
+	"item": [
+		{
+			"name": "Register User",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"Test Student\",\n    \"email\": \"student@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"student\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/register",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"register"
+					]
+				},
+				"description": "Registers a new user (admin, teacher, or student).\n\n**Body Fields:**\n* `name` (String)\n* `email` (String)\n* `password` (String)\n* `role` (String: 'admin', 'teacher', or 'student')"
+			},
+			"response": []
+		},
+		{
+			"name": "Login User",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"student@example.com\",\n    \"password\": \"password123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"login"
+					]
+				},
+				"description": "Logs in an existing user with email and password.\n\nReturns a `token` and `role` if successful."
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:5000/api/auth",
+			"type": "string",
+			"description": "The base URL for the authentication API, based on your server.js and .env file."
+		}
+	]
+}
