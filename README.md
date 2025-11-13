@@ -93,7 +93,27 @@ npm run dev
   "dev": "nodemon server.js"
 }
 ```
+---
 
+## 🧪 Testing with Postman
+
+To easily test the authentication routes, you can use the provided Postman collection JSON.
+
+**Prerequisites:**
+* Postman is installed.
+* Your backend server is running (`npm run dev`).
+
+**Instructions:**
+
+1.  **Import Collection**: Open Postman and import the `LMS-Auth.json` file.
+2.  **Check Variables**: The collection uses a variable `{{baseUrl}}` to manage the API URL.
+    * Click on the "LMS Backend (Auth)" collection, go to the **Variables** tab.
+    * The `baseUrl` is pre-set to `http://localhost:5000/api/auth`, which matches your `.env` and `server.js` setup. If your port is different, you only need to change it here.
+3.  **Run Requests**:
+    * **`POST` Register User**: Run this request first to create a new user in your database. You can change the `email`, `password`, and `role` in the `Body` tab.
+    * **`POST` Login User**: After registering, run this request with the *same credentials* to test the login. If successful, you will receive a JWT `token`.
+
+This workflow allows you to quickly verify that user registration (with password hashing) and login (with password comparison) are working correctly.
 ---
 
 ## 🔗 API Endpoints Overview
