@@ -3,13 +3,35 @@ import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
 export const loginUser = async (req, res) => {
-  const { email, password } = req.body;
-  const user = await User.findOne({ email });
-  if (!user) return res.status(404).json({ message: "User not found" });
+  try {
+    const { email, password } = req.body;
 
-  const valid = await bcrypt.compare(password, user.passwordHash);
-  if (!valid) return res.status(400).json({ message: "Invalid credentials" });
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-  const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
-  res.json({ token, role: user.role });
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: "Invalid password" });
+    }
+
+    // JWT token generation
+    const token = jwt.sign({ number: user.number }, process.env.JWT_SECRET, {
+      expiresIn: "2d",
+    });
+
+    return res.status(200).jso({
+      message: "Login Successful",
+      user:{
+        role: user.role,
+        token: token,
+      }
+    })
+  } catch (error) {
+    console.error("Error logging in user : ", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 };
