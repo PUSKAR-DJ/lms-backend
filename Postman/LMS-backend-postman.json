@@ -1,11 +1,11 @@
 {
 	"info": {
-		"_postman_id": "1be2cf07-6da4-4468-9ce6-9522017b0e74",
+		"_postman_id": "4a1e32a5-de1a-4125-804a-27b0f4b6be0b",
 		"name": "LMS Backend (Auth)",
-		"description": "# How to Test Your LMS Auth Routes\n\nThis guide will walk you through importing and using this collection to test your backend.\n\n### Step 1: Check the `baseUrl` Variable\n\nThe collection is set up with a variable `{{baseUrl}}` to make it easy to manage your API's URL.\n\n1.  Click on the \"LMS Backend (Auth)\" collection.\n2.  Go to the **Variables** tab.\n3.  You will see `baseUrl` is set to `http://localhost:5000/api/auth`. This matches the settings in your `.env` file (`PORT=5000`) and `server.js` file (`/api/auth`).\n4.  If your server is running on a different port, you only need to change it in this one spot.\n\n### Step 2: Test the Routes\n\n**Important:** Make sure your backend server is running!\n```bash\nnpm run dev\n```\n\n**Test Workflow (Run in this order):**\n\n1.  **Register User**\n    * Expand the collection and click on the **Register User** request.\n    * Click **Send**.\n    * If successful, you should get a `201 Created` status and a JSON response with a `token` and `role`. This confirms the user was created in your database.\n\n2.  **Login User**\n    * Click on the **Login User** request.\n    * The `Body` is pre-filled with the *same credentials* from the register request.\n    * Click **Send**.\n    * If successful, you should get a `200 OK` status and a JSON response with a `token` and `role`. This confirms your login logic and password comparison are working correctly.\n\n**What to do if you get an error:**\n\n* **`400 - \"User already exists\"`**: This is expected if you run **Register User** more than once with the same email. It's a good sign! It means your check is working.\n* **`404 - \"User not found\"`**: Make sure you ran **Register User** first before trying to log in.\n* **`400 - \"Invalid credentials\"`**: Check if the password in the **Login User** body matches the one you used to register.\n* **`Error: connect ECONNREFUSED`**: Make sure your backend server is running (`npm run dev`).",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"description": "# How to Test Your LMS Auth Routes\n\nThis guide will walk you through importing and using this collection to test your backend.\n\n### Step 1: Check the `baseUrl` Variable\n\nThe collection is set up with a variable `{{baseUrl}}` to make it easy to manage your API's URL.\n\n1.  Click on the \"LMS Backend (Auth)\" collection.\n2.  Go to the **Variables** tab.\n3.  You will see `baseUrl` is set to `http://localhost:5000/api/auth`. This matches the settings in your `.env` file (`PORT=5000`) and `server.js` file (`/api/auth`).\n4.  If your server is running on a different port, you only need to change it in this one spot.\n\n### Step 2: Test the Routes\n\n**Important:** Make sure your backend server is running!\n```bash\nnpm run dev\n```\n\n**Test Workflow (Run in this order):**\n\n1.  **Register User**\n    * Expand the collection and click on the **Register User** request.\n    * Click **Send**.\n    * If successful, you should get a `201 Created` status and a JSON response with a `token` and `role`. This confirms the user was created in your database.\n\n2.  **Login User**\n    * Click on the **Login User** request.\n    * The `Body` is pre-filled with the *same credentials* from the register request.\n    * Click **Send**.\n    * If successful, you should get a `200 OK` status and a JSON response with a `token` and `role`. This confirms your login logic and password comparison are working correctly.\n\n**What to do if you get an error:**\n\n* **`400 - \"User already exists\"`**: This is expected if you run **Register User** more than once with the same email. It's a good sign! It means your check is working.\n* **`404 - \"User not found\"`**: Make sure you ran **Register User** first before trying to log in.\n* **`400 - \"Invalid credentials\"`**: Check if the password in the **Login User** body matches the one you used to register.\n* **`Error: connect ECONNREFUSED`**: Make sure your backend server is running (`npm run dev`).\n\n---\n\nCollection-level Tests script:\n\n```javascript\n// Collection-level Tests: Safe token/role capture without failing unrelated requests\n\n// 1) Attempt to parse response as JSON\nlet json = null;\ntry {\n  json = pm.response.json();\n} catch (e) {\n  // Not JSON; that's OK for unrelated requests\n  json = null;\n}\n\n// 2) Extract token and validate JWT shape\nconst token = json && json.token;\nconst jwtRegex = /^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/;\n\n// 3) Only update variables when token looks like a JWT\nif (typeof token === \"string\" && token && jwtRegex.test(token)) {\n  pm.collectionVariables.set(\"authToken\", token);\n  pm.globals.set(\"authToken\", token);\n\n  if (json && typeof json.role !== \"undefined\") {\n    pm.collectionVariables.set(\"userRole\", String(json.role));\n  }\n\n  console.info(\"[Auth] Captured valid JWT token and updated variables.\");\n} else {\n  // Do not overwrite existing variables when token missing/invalid\n  if (token) {\n    console.warn(\"[Auth] Token present but not a valid-looking JWT. Variables not modified.\");\n  } else {\n    console.debug(\"[Auth] No token in response. Variables not modified.\");\n  }\n}\n```\n\nHeaders:\n- Added a collection-level header `Authorization: Bearer {{authToken}}` so child requests inherit it. If a request already defines Authorization, that request-level value will override the collection header.\n\nNotes:\n- Login request can inherit the header safely; the server will ignore it if not needed. If you want to explicitly disable Authorization on Login, add an empty or disabled Authorization header on that request.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "43800398",
-		"_collection_link": "https://pastos101.postman.co/workspace/Cosmos~dc779c67-8fd7-4f1f-b287-ab812f434d4d/collection/43800398-1be2cf07-6da4-4468-9ce6-9522017b0e74?action=share&source=collection_link&creator=43800398"
+		"_collection_link": "https://pastos101.postman.co/workspace/Cosmos~dc779c67-8fd7-4f1f-b287-ab812f434d4d/collection/43800398-4a1e32a5-de1a-4125-804a-27b0f4b6be0b?action=share&source=collection_link&creator=43800398"
 	},
 	"item": [
 		{
@@ -63,12 +63,85 @@
 			"response": []
 		}
 	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{authToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					"// Collection-level Tests: Safe token/role capture without failing unrelated requests\r",
+					"\r",
+					"// 1) Attempt to parse response as JSON\r",
+					"let json = null;\r",
+					"try {\r",
+					"  json = pm.response.json();\r",
+					"} catch (e) {\r",
+					"  // Not JSON; that's OK for unrelated requests\r",
+					"  json = null;\r",
+					"}\r",
+					"\r",
+					"// 2) Extract token and validate JWT shape\r",
+					"const token = json && json.token;\r",
+					"const jwtRegex = /^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/;\r",
+					"\r",
+					"// 3) Only update variables when token looks like a JWT\r",
+					"if (typeof token === \"string\" && token && jwtRegex.test(token)) {\r",
+					"  pm.collectionVariables.set(\"authToken\", token);\r",
+					"  pm.globals.set(\"authToken\", token);\r",
+					"\r",
+					"  if (json && typeof json.role !== \"undefined\") {\r",
+					"    pm.collectionVariables.set(\"userRole\", String(json.role));\r",
+					"  }\r",
+					"\r",
+					"  console.info(\"[Auth] Captured valid JWT token and updated variables.\");\r",
+					"} else {\r",
+					"  // Do not overwrite existing variables when token missing/invalid\r",
+					"  if (token) {\r",
+					"    console.warn(\"[Auth] Token present but not a valid-looking JWT. Variables not modified.\");\r",
+					"  } else {\r",
+					"    console.debug(\"[Auth] No token in response. Variables not modified.\");\r",
+					"  }\r",
+					"}"
+				]
+			}
+		}
+	],
 	"variable": [
 		{
 			"key": "baseUrl",
 			"value": "http://localhost:5000/api/auth",
-			"type": "string",
 			"description": "The base URL for the authentication API, based on your server.js and .env file."
+		},
+		{
+			"key": "authToken",
+			"value": ""
+		},
+		{
+			"key": "userRole",
+			"value": ""
 		}
 	]
 }

@@ -2,37 +2,92 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
 
-export const loginUser = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+/**
+ * @desc    Register a new user
+ * @route   POST /api/auth/register
+ * @access  Public
+ */
+export const registerUser = async (req, res) => {
+  const { name, email, password, role } = req.body;
 
-    // Find user by email
+  try {
+    // 1. Check if user already exists
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    // 2. Create new user
+    // The password will be automatically hashed by the pre-save hook in user.js
+    const user = new User({
+      name,
+      email,
+      password,
+      role: role || "student", // Default role to 'student' if not provided
+    });
+
+    await user.save();
+
+    // 3. Generate JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // 4. Respond with token
+    res.status(201).json({
+      token,
+      role: user.role,
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+/**
+ * @desc    Authenticate user & get token (Login)
+ * @route   POST /api/auth/login
+ *access  Public
+ */
+export const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    // 1. Check for user by email
     const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Check password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(400).json({ message: "Invalid password" });
+    // 2. Check if password is valid
+    // Compare plain text password with the hashed password in the database
+    const valid = await bcrypt.compare(password, user.password);
+
+    if (!valid) {
+      return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // JWT token generation
-    const token = jwt.sign({ number: user.number }, process.env.JWT_SECRET, {
-      expiresIn: "2d",
+    // 3. Generate JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // 4. Respond with token
+    res.json({
+      token,
+      role: user.role,
     });
 
-    return res.status(200).jso({
-      message: "Login Successful",
-      user:{
-        role: user.role,
-        token: token,
-      }
-    })
   } catch (error) {
-    console.error("Error logging in user : ", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
-
