@@ -1,66 +1,247 @@
 {
 	"info": {
-		"_postman_id": "4a1e32a5-de1a-4125-804a-27b0f4b6be0b",
-		"name": "LMS Backend (Auth)",
-		"description": "# How to Test Your LMS Auth Routes\n\nThis guide will walk you through importing and using this collection to test your backend.\n\n### Step 1: Check the `baseUrl` Variable\n\nThe collection is set up with a variable `{{baseUrl}}` to make it easy to manage your API's URL.\n\n1.  Click on the \"LMS Backend (Auth)\" collection.\n2.  Go to the **Variables** tab.\n3.  You will see `baseUrl` is set to `http://localhost:5000/api/auth`. This matches the settings in your `.env` file (`PORT=5000`) and `server.js` file (`/api/auth`).\n4.  If your server is running on a different port, you only need to change it in this one spot.\n\n### Step 2: Test the Routes\n\n**Important:** Make sure your backend server is running!\n```bash\nnpm run dev\n```\n\n**Test Workflow (Run in this order):**\n\n1.  **Register User**\n    * Expand the collection and click on the **Register User** request.\n    * Click **Send**.\n    * If successful, you should get a `201 Created` status and a JSON response with a `token` and `role`. This confirms the user was created in your database.\n\n2.  **Login User**\n    * Click on the **Login User** request.\n    * The `Body` is pre-filled with the *same credentials* from the register request.\n    * Click **Send**.\n    * If successful, you should get a `200 OK` status and a JSON response with a `token` and `role`. This confirms your login logic and password comparison are working correctly.\n\n**What to do if you get an error:**\n\n* **`400 - \"User already exists\"`**: This is expected if you run **Register User** more than once with the same email. It's a good sign! It means your check is working.\n* **`404 - \"User not found\"`**: Make sure you ran **Register User** first before trying to log in.\n* **`400 - \"Invalid credentials\"`**: Check if the password in the **Login User** body matches the one you used to register.\n* **`Error: connect ECONNREFUSED`**: Make sure your backend server is running (`npm run dev`).\n\n---\n\nCollection-level Tests script:\n\n```javascript\n// Collection-level Tests: Safe token/role capture without failing unrelated requests\n\n// 1) Attempt to parse response as JSON\nlet json = null;\ntry {\n  json = pm.response.json();\n} catch (e) {\n  // Not JSON; that's OK for unrelated requests\n  json = null;\n}\n\n// 2) Extract token and validate JWT shape\nconst token = json && json.token;\nconst jwtRegex = /^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/;\n\n// 3) Only update variables when token looks like a JWT\nif (typeof token === \"string\" && token && jwtRegex.test(token)) {\n  pm.collectionVariables.set(\"authToken\", token);\n  pm.globals.set(\"authToken\", token);\n\n  if (json && typeof json.role !== \"undefined\") {\n    pm.collectionVariables.set(\"userRole\", String(json.role));\n  }\n\n  console.info(\"[Auth] Captured valid JWT token and updated variables.\");\n} else {\n  // Do not overwrite existing variables when token missing/invalid\n  if (token) {\n    console.warn(\"[Auth] Token present but not a valid-looking JWT. Variables not modified.\");\n  } else {\n    console.debug(\"[Auth] No token in response. Variables not modified.\");\n  }\n}\n```\n\nHeaders:\n- Added a collection-level header `Authorization: Bearer {{authToken}}` so child requests inherit it. If a request already defines Authorization, that request-level value will override the collection header.\n\nNotes:\n- Login request can inherit the header safely; the server will ignore it if not needed. If you want to explicitly disable Authorization on Login, add an empty or disabled Authorization header on that request.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "43800398",
-		"_collection_link": "https://pastos101.postman.co/workspace/Cosmos~dc779c67-8fd7-4f1f-b287-ab812f434d4d/collection/43800398-4a1e32a5-de1a-4125-804a-27b0f4b6be0b?action=share&source=collection_link&creator=43800398"
+		"_postman_id": "b1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5e",
+		"name": "LMS Backend (Full)",
+		"description": "# How to Test Your LMS Routes\n\nThis guide will walk you through importing and using this collection to test your backend.\n\n### Step 1: Check Variables\n\nThis collection uses variables. Click the collection name (\"LMS Backend (Full)\") and go to the **Variables** tab.\n\n* `baseUrl_auth`: Set to `http://localhost:5000/api/auth`\n* `baseUrl_student`: Set to `http://localhost:5000/api/student`\n* `authToken`: This will be filled in *automatically* when you log in.\n\n### Step 2: Test Workflow\n\n**Important:** Make sure your backend server is running! (`npm run dev`)\n\n1.  **Go to the \"Auth\" folder.**\n2.  Run **`POST /register`** to create a new user. Make sure to set the `role` to `\"student\"` in the request body.\n3.  Run **`POST /login`** with the same credentials.\n    * If successful, the **Tests** script will automatically save your JWT to the `authToken` variable.\n\n4.  **Go to the \"Student\" folder.**\n5.  You can now run any of the **`GET`** requests (e.g., `GET /my-profile`). They are all pre-configured to use the `authToken` for authorization.\n\n6.  **To test file upload:**\n    * Run `GET /my-assignments` to find an `_id` for an assignment.\n    * Go to **`POST /submit-assignment`**. In the URL, replace `:assignmentId` with the ID you copied.\n    * Go to the **Body** tab (set to `form-data`).\n    * In the `file` key, click `Select Files` and upload a test file (e.g., a PDF or .txt).\n    * Click **Send**.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
-			"name": "Register User",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"name\": \"Test Student\",\n    \"email\": \"student@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"student\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
+			"name": "Auth",
+			"description": "User registration and login.",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Test Student\",\n    \"email\": \"student@example.com\",\n    \"password\": \"password123\",\n    \"role\": \"student\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl_auth}}/register",
+							"host": [
+								"{{baseUrl_auth}}"
+							],
+							"path": [
+								"register"
+							]
+						},
+						"description": "Registers a new user (admin, teacher, or student).\n\n**Body Fields:**\n* `name` (String)\n* `email` (String)\n* `password` (String)\n* `role` (String: 'admin', 'teacher', or 'student')"
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{baseUrl}}/register",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"register"
-					]
-				},
-				"description": "Registers a new user (admin, teacher, or student).\n\n**Body Fields:**\n* `name` (String)\n* `email` (String)\n* `password` (String)\n* `role` (String: 'admin', 'teacher', or 'student')"
-			},
-			"response": []
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"student@example.com\",\n    \"password\": \"password123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl_auth}}/login",
+							"host": [
+								"{{baseUrl_auth}}"
+							],
+							"path": [
+								"login"
+							]
+						},
+						"description": "Logs in an existing user with email and password.\n\nReturns a `token` and `role` if successful."
+					},
+					"response": []
+				}
+			]
 		},
 		{
-			"name": "Login User",
-			"request": {
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"email\": \"student@example.com\",\n    \"password\": \"password123\"\n}",
-					"options": {
-						"raw": {
-							"language": "json"
+			"name": "Student",
+			"description": "Routes for the logged-in student.",
+			"item": [
+				{
+					"name": "Get My Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl_student}}/my-profile",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"my-profile"
+							]
 						}
-					}
+					},
+					"response": []
 				},
-				"url": {
-					"raw": "{{baseUrl}}/login",
-					"host": [
-						"{{baseUrl}}"
-					],
-					"path": [
-						"login"
-					]
+				{
+					"name": "Get My Class",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl_student}}/my-class",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"my-class"
+							]
+						}
+					},
+					"response": []
 				},
-				"description": "Logs in an existing user with email and password.\n\nReturns a `token` and `role` if successful."
-			},
-			"response": []
+				{
+					"name": "Get My Course",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl_student}}/my-course",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"my-course"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Lessons",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl_student}}/my-lessons",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"my-lessons"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Attendance",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl_student}}/my-attendance",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"my-attendance"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Assignments",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl_student}}/my-assignments",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"my-assignments"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Results",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl_student}}/my-results",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"my-results"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get My Fees",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl_student}}/my-fees",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"my-fees"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Submit Assignment",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl_student}}/submit-assignment/:assignmentId",
+							"host": [
+								"{{baseUrl_student}}"
+							],
+							"path": [
+								"submit-assignment",
+								":assignmentId"
+							],
+							"variable": [
+								{
+									"key": "assignmentId",
+									"value": "REPLACE_WITH_ASSIGNMENT_ID"
+								}
+							]
+						},
+						"description": "Submits a file for an assignment. \n\n1. Get an assignment ID from `GET /my-assignments`.\n2. Replace `:assignmentId` in the URL with the real ID.\n3. In the Body (form-data), upload a file under the `file` key."
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"auth": {
@@ -78,8 +259,6 @@
 			"listen": "prerequest",
 			"script": {
 				"type": "text/javascript",
-				"packages": {},
-				"requests": {},
 				"exec": [
 					""
 				]
@@ -89,41 +268,38 @@
 			"listen": "test",
 			"script": {
 				"type": "text/javascript",
-				"packages": {},
-				"requests": {},
 				"exec": [
-					"// Collection-level Tests: Safe token/role capture without failing unrelated requests\r",
-					"\r",
-					"// 1) Attempt to parse response as JSON\r",
-					"let json = null;\r",
-					"try {\r",
-					"  json = pm.response.json();\r",
-					"} catch (e) {\r",
-					"  // Not JSON; that's OK for unrelated requests\r",
-					"  json = null;\r",
-					"}\r",
-					"\r",
-					"// 2) Extract token and validate JWT shape\r",
-					"const token = json && json.token;\r",
-					"const jwtRegex = /^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/;\r",
-					"\r",
-					"// 3) Only update variables when token looks like a JWT\r",
-					"if (typeof token === \"string\" && token && jwtRegex.test(token)) {\r",
-					"  pm.collectionVariables.set(\"authToken\", token);\r",
-					"  pm.globals.set(\"authToken\", token);\r",
-					"\r",
-					"  if (json && typeof json.role !== \"undefined\") {\r",
-					"    pm.collectionVariables.set(\"userRole\", String(json.role));\r",
-					"  }\r",
-					"\r",
-					"  console.info(\"[Auth] Captured valid JWT token and updated variables.\");\r",
-					"} else {\r",
-					"  // Do not overwrite existing variables when token missing/invalid\r",
-					"  if (token) {\r",
-					"    console.warn(\"[Auth] Token present but not a valid-looking JWT. Variables not modified.\");\r",
-					"  } else {\r",
-					"    console.debug(\"[Auth] No token in response. Variables not modified.\");\r",
-					"  }\r",
+					"// Collection-level Tests: Safe token/role capture without failing unrelated requests",
+					"",
+					"// 1) Attempt to parse response as JSON",
+					"let json = null;",
+					"try {",
+					"  json = pm.response.json();",
+					"} catch (e) {",
+					"  // Not JSON; that's OK for unrelated requests",
+					"  json = null;",
+					"}",
+					"",
+					"// 2) Extract token and validate JWT shape",
+					"const token = json && json.token;",
+					"const jwtRegex = /^[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+$/;",
+					"",
+					"// 3) Only update variables when token looks like a JWT",
+					"if (typeof token === \"string\" && token && jwtRegex.test(token)) {",
+					"  pm.collectionVariables.set(\"authToken\", token);",
+					"",
+					"  if (json && typeof json.role !== \"undefined\") {",
+					"    pm.collectionVariables.set(\"userRole\", String(json.role));",
+					"  }",
+					"",
+					"  console.info(\"[Auth] Captured valid JWT token and updated variables.\");",
+					"} else {",
+					"  // Do not overwrite existing variables when token missing/invalid",
+					"  if (token) {",
+					"    console.warn(\"[Auth] Token present but not a valid-looking JWT. Variables not modified.\");",
+					"  } else {",
+					"    console.debug(\"[Auth] No token in response. Variables not modified.\");",
+"  }",
 					"}"
 				]
 			}
@@ -131,17 +307,24 @@
 	],
 	"variable": [
 		{
-			"key": "baseUrl",
+			"key": "baseUrl_auth",
 			"value": "http://localhost:5000/api/auth",
-			"description": "The base URL for the authentication API, based on your server.js and .env file."
+			"description": "Base URL for Auth routes"
+		},
+		{
+			"key": "baseUrl_student",
+			"value": "http://localhost:5000/api/student",
+			"description": "Base URL for Student routes"
 		},
 		{
 			"key": "authToken",
-			"value": ""
+			"value": "",
+			"description": "Auto-populated from Login request"
 		},
 		{
 			"key": "userRole",
-			"value": ""
+			"value": "",
+			"description": "Auto-populated from Login request"
 		}
 	]
 }

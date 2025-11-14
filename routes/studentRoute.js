@@ -11,6 +11,7 @@ import {
   submitAssignment
 } from "../controllers/studentController.js";
 import { protect } from "../middleware/authMiddleware.js"
+import upload from "../config/multer.js"; //Import multer configuration for file uploads
 
 const router = express.Router();
 
@@ -24,5 +25,12 @@ router.get("/my-assignments", protect, getMyAssignments);
 router.get("/my-results", protect, getMyResults);
 router.get("/my-fees", protect, getMyFees);
 router.post("/submit-assignment/:assignmentId", protect, submitAssignment);
+
+router.post(
+  "/submit-assignment/:assignmentId", 
+  protect, 
+  upload.single("file"), // Use .single() and the field name "file"
+  submitAssignment
+);
 
 export default router;
