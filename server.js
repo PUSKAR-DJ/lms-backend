@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import studentRoutes from "./routes/studentRoute.js"
 
 dotenv.config();
 connectDB();
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use(cors({ origin: process.env.CORS_ORIGIN }));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/student", studentRoutes);
 
 app.get("/", (req, res) => res.send("LMS Backend Running..."));
 
